@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧數位班級經營儀表板 2.0 | Smart Classroom Management Suite</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        /* Print Mode Optimization */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .timetable-card {
+                border: 1px solid #000 !important;
+                box-shadow: none !important;
+            }
+        }
+
+        .tab-btn.active {
+            background-color: #0284c7;
+            color: white;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+        
+        .dark .tab-btn.active {
+            background-color: #38bdf8;
+            color: #0f172a;
+        }
+
+        /* Glassmorphism subtle card styling */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors duration-300">
+
+    <!-- Top Global Header -->
+    <header class="w-full bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 backdrop-blur-md sticky top-0 z-30 px-4 py-3 flex flex-wrap items-center justify-between gap-3 no-print">
+        <!-- Logo & Title -->
+        <div class="flex items-center space-x-3">
+            <div class="p-2 bg-gradient-to-tr from-sky-600 to-indigo-600 text-white rounded-2xl shadow-lg shadow-sky-500/20">
+                <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-tight bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">
+                    智慧數位班級經營儀表板 <span class="text-xs px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-bold ml-1">v2.0</span>
+                </h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Smart Classroom Management Suite</p>
+            </div>
+        </div>
+
+        <!-- Center: Status Banner & Clock -->
+        <div class="flex items-center gap-3">
+            <!-- Active Status Selector -->
+            <div class="hidden sm:flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">班級狀態：</span>
+                <select id="globalStatusSelect" onchange="changeGlobalStatus(this.value)" class="bg-transparent text-xs font-bold text-sky-600 dark:text-sky-400 focus:outline-none cursor-pointer">
+                    <option value="🤫 保持安靜（獨立作答）">🤫 保持安靜（獨立作答）</option>
+                    <option value="🗣️ 小聲討論（小組合作）">🗣️ 小聲討論（小組合作）</option>
+                    <option value="👨‍🏫 專注聽講（老師說明）">👨‍🏫 專注聽講（老師說明）</option>
+                    <option value="📚 自主閱讀（靜心閱讀）">📚 自主閱讀（靜心閱讀）</option>
+                    <option value="🧹 掃除時間（用心維護）">🧹 掃除時間（用心維護）</option>
+                    <option value="🎒 準備放學（收拾書包）">🎒 準備放學（收拾書包）</option>
+                </select>
+            </div>
+
+            <!-- Real-time Clock -->
+            <div class="bg-slate-100 dark:bg-slate-800 px-3.5 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
+                <div id="liveClock" class="text-base font-extrabold font-mono tracking-wider text-slate-800 dark:text-slate-100">00:00:00</div>
+                <div id="liveDate" class="text-[10px] text-slate-500 dark:text-slate-400">2026/09/12 (六)</div>
+            </div>
+        </div>
+
+        <!-- Right Action Controls -->
+        <div class="flex items-center gap-2">
+            <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="切換深淺模式">
+                <i data-lucide="sun-moon" class="w-4 h-4 text-slate-700 dark:text-slate-300"></i>
+            </button>
+            <button onclick="toggleFullscreen()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="全螢幕模式">
+                <i data-lucide="maximize" class="w-4 h-4 text-slate-700 dark:text-slate-300"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs Bar -->
+    <nav class="w-full bg-slate-100/80 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 px-4 py-2 no-print">
+        <div class="max-w-7xl mx-auto flex items-center justify-start sm:justify-center gap-2 overflow-x-auto no-scrollbar">
+            <button onclick="switchTab('tab-schedule')" id="btn-tab-schedule" class="tab-btn active px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="calendar-clock" class="w-4 h-4"></i> 班級課表與作息刻劃
+            </button>
+            <button onclick="switchTab('tab-tools')" id="btn-tab-tools" class="tab-btn px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="timer" class="w-4 h-4"></i> 課堂計時與分貝監測
+            </button>
+            <button onclick="switchTab('tab-picker')" id="btn-tab-picker" class="tab-btn px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="disc" class="w-4 h-4"></i> 隨機點名與幸運轉盤
+            </button>
+            <button onclick="switchTab('tab-honor')" id="btn-tab-honor" class="tab-btn px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="trophy" class="w-4 h-4"></i> 學生榮譽榜與集點
+            </button>
+            <button onclick="switchTab('tab-board')" id="btn-tab-board" class="tab-btn px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <i data-lucide="megaphone" class="w-4 h-4"></i> 即時告示板與叮嚀
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Container Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 overflow-y-auto">
+
+        <!-- TAB 1: 班級課表與作息刻劃工具 (FEATURE 1 - NEW KEY FEATURE) -->
+        <section id="tab-schedule" class="tab-content space-y-6">
+            <!-- Top Row: Clock Dial + Daily Schedule Segments -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Visual 24-Hour Schedule Clock Dial -->
+                <div class="lg:col-span-5 glass-card rounded-3xl p-5 shadow-sm flex flex-col items-center justify-between">
+                    <div class="w-full flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="p-2 rounded-xl bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400">
+                                <i data-lucide="clock" class="w-5 h-5"></i>
+                            </span>
+                            <h2 class="font-extrabold text-lg">24小時視覺作息刻劃鐘</h2>
+                        </div>
+                        <span id="activePeriodBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 animate-pulse">
+                            晨讀時間中 📖
+                        </span>
+                    </div>
+
+                    <!-- Canvas Clock Display -->
+                    <div class="relative w-full max-w-[280px] aspect-square my-2 flex items-center justify-center">
+                        <canvas id="clockDialCanvas" width="300" height="300" class="w-full h-full drop-shadow-md"></canvas>
+                    </div>
+
+                    <p class="text-xs text-slate-500 dark:text-slate-400 text-center mt-1">
+                        時鐘刻度即時呈現作息區段，彩框順時針滑移標示目前進度。
+                    </p>
+                </div>
+
+                <!-- Schedule Segments Manager -->
+                <div class="lg:col-span-7 glass-card rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="p-2 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">
+                                <i data-lucide="list-todo" class="w-5 h-5"></i>
+                            </span>
+                            <h2 class="font-extrabold text-lg">每日作息時刻表設定</h2>
+                        </div>
+                        <button onclick="openScheduleModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1">
+                            <i data-lucide="plus" class="w-4 h-4"></i> 新增作息時段
+                        </button>
+                    </div>
+
+                    <!-- Schedule List Container -->
+                    <div id="scheduleSegmentsList" class="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                        <!-- Dynamic list rendered by JS -->
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center text-xs text-slate-500">
+                        <span>預設作息自動同步於時刻畫鐘</span>
+                        <button onclick="resetDefaultSchedule()" class="text-indigo-600 dark:text-indigo-400 hover:underline">載入標準作息範本</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Weekly Class Timetable Builder -->
+            <div class="glass-card rounded-3xl p-6 shadow-sm flex flex-col space-y-4 timetable-card">
+                <div class="flex flex-wrap items-center justify-between gap-3 no-print">
+                    <div class="flex items-center space-x-2">
+                        <span class="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
+                            <i data-lucide="table" class="w-5 h-5"></i>
+                        </span>
+                        <div>
+                            <h2 class="font-extrabold text-lg">班級週課表繪製器 (Timetable Builder)</h2>
+                            <p class="text-xs text-slate-500">點選底下「科目刷子」後直接點擊課表格子塗色，亦可直接點擊內文編輯。</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <button onclick="clearTimetable()" class="px-3 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 transition">
+                            清空課表
+                        </button>
+                        <button onclick="window.print()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5">
+                            <i data-lucide="printer" class="w-4 h-4"></i> 列印 / 匯出 PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Subject Brush Palette -->
+                <div class="no-print bg-slate-100 dark:bg-slate-800/60 p-3 rounded-2xl flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
+                        <i data-lucide="palette" class="w-4 h-4"></i> 科目刷子：
+                    </span>
+                    <div id="paletteContainer" class="flex flex-wrap items-center gap-1.5">
+                        <!-- Palette Buttons injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Timetable HTML Grid Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-center border-collapse text-xs md:text-sm">
+                        <thead>
+                            <tr class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                <th class="p-2 border border-slate-200 dark:border-slate-700 w-24">節次 / 時間</th>
+                                <th class="p-2 border border-slate-200 dark:border-slate-700 font-bold">星期一</th>
+                                <th class="p-2 border border-slate-200 dark:border-slate-700 font-bold">星期二</th>
+                                <th class="p-2 border border-slate-200 dark:border-slate-700 font-bold">星期三</th>
+                                <th class="p-2 border border-slate-200 dark:border-slate-700 font-bold">星期四</th>
+                                <th class="p-2 border border-slate-200 dark:border-slate-700 font-bold">星期五</th>
+                            </tr>
+                        </thead>
+                        <tbody id="timetableBody">
+                            <!-- Dynamic Timetable Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: 課堂工具箱 (FEATURE 3: Timer & Noise Meter) -->
+        <section id="tab-tools" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Countdown Timer & Stopwatch -->
+                <div class="glass-card rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400">
+                                <i data-lucide="timer" class="w-5 h-5"></i>
+                            </span>
+                            <h2 class="font-bold text-lg">課堂互動計時器</h2>
+                        </div>
+                        <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs">
+                            <button id="btnTimerMode" onclick="setTimerMode('timer')" class="px-3 py-1 rounded-lg font-bold bg-white dark:bg-slate-700 text-sky-600 shadow-sm transition">倒數計時</button>
+                            <button id="btnStopwatchMode" onclick="setTimerMode('stopwatch')" class="px-3 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 transition">碼錶</button>
+                        </div>
+                    </div>
+
+                    <!-- Ring Circle Display -->
+                    <div class="relative flex flex-col items-center justify-center my-4">
+                        <svg class="w-56 h-56 transform -rotate-90">
+                            <circle cx="112" cy="112" r="96" stroke="currentColor" stroke-width="12" class="text-slate-200 dark:text-slate-800" fill="transparent"/>
+                            <circle id="timerProgressRing" cx="112" cy="112" r="96" stroke="currentColor" stroke-width="12" class="text-amber-500 transition-all duration-300" stroke-linecap="round" stroke-dasharray="603.18" stroke-dashoffset="0" fill="transparent"/>
+                        </svg>
+                        <div class="absolute flex flex-col items-center justify-center text-center">
+                            <span id="timerDisplay" class="text-5xl font-black font-mono tracking-tight">05:00</span>
+                            <span id="timerSubtext" class="text-xs text-slate-400 mt-1 font-medium">點擊開始計時</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Presets -->
+                    <div id="quickPresetBar" class="grid grid-cols-5 gap-2 mb-4">
+                        <button onclick="setQuickTimer(1)" class="py-1.5 px-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 transition">1分鐘</button>
+                        <button onclick="setQuickTimer(3)" class="py-1.5 px-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 transition">3分鐘</button>
+                        <button onclick="setQuickTimer(5)" class="py-1.5 px-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 transition">5分鐘</button>
+                        <button onclick="setQuickTimer(10)" class="py-1.5 px-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 transition">10分鐘</button>
+                        <button onclick="setQuickTimer(15)" class="py-1.5 px-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 transition">15分鐘</button>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button id="btnStartPauseTimer" onclick="toggleTimer()" class="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl shadow-lg shadow-amber-500/20 active:scale-95 transition flex items-center justify-center gap-2">
+                            <i id="iconTimerPlay" data-lucide="play" class="w-5 h-5 fill-current"></i>
+                            <span id="labelTimerPlay">開始</span>
+                        </button>
+                        <button onclick="resetTimer()" class="p-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-2xl transition">
+                            <i data-lucide="rotate-ccw" class="w-5 h-5 text-slate-600 dark:text-slate-300"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Noise Level Monitor -->
+                <div id="noiseMonitorCard" class="glass-card rounded-3xl p-6 shadow-sm flex flex-col justify-between transition-colors">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
+                                <i data-lucide="mic" class="w-5 h-5"></i>
+                            </span>
+                            <h2 class="font-bold text-lg">聲控分貝音量監測</h2>
+                        </div>
+                        <span id="noiseWarningBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                            安靜良好 ✨
+                        </span>
+                    </div>
+
+                    <!-- Bouncy Balls Physics Canvas -->
+                    <div class="relative w-full h-52 bg-slate-900 rounded-2xl overflow-hidden my-3 border border-slate-700">
+                        <canvas id="noiseCanvas" class="w-full h-full block"></canvas>
+                        <div class="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl text-white font-mono text-xs flex items-center gap-2">
+                            <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
+                            <span id="dbValueText">00 dB (未啟動)</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-500">
+                            <span>警告閥值: <span id="sensitivityVal">50</span> dB</span>
+                            <button id="btnMicToggle" onclick="toggleMicrophone()" class="text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 font-bold">
+                                <i data-lucide="power" class="w-4 h-4"></i> 啟動麥克風監測
+                            </button>
+                        </div>
+                        <input type="range" id="sensitivitySlider" min="20" max="90" value="50" oninput="updateSensitivity(this.value)" class="w-full accent-emerald-500 bg-slate-200 dark:bg-slate-700 h-2 rounded-lg cursor-pointer">
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TAB 3: 隨機點名與幸運轉盤 (FEATURE 2: Random Wheel) -->
+        <section id="tab-picker" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Wheel Canvas Card -->
+                <div class="lg:col-span-7 glass-card rounded-3xl p-6 shadow-sm flex flex-col items-center justify-between">
+                    <div class="w-full flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="p-2 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400">
+                                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                            </span>
+                            <h2 class="font-bold text-lg">課堂隨機幸運轉盤</h2>
+                        </div>
+                        <label class="flex items-center cursor-pointer text-xs font-semibold text-slate-500">
+                            <input type="checkbox" id="excludeDrawnToggle" onchange="toggleExcludeDrawn(this.checked)" class="sr-only peer">
+                            <div class="w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-purple-600 relative"></div>
+                            <span class="ml-2">抽中後暫時排除</span>
+                        </label>
+                    </div>
+
+                    <!-- Canvas Wheel Container -->
+                    <div class="relative flex items-center justify-center my-3 w-full max-w-[320px] aspect-square">
+                        <!-- Pointer -->
+                        <div class="absolute top-0 z-10 -mt-2 text-rose-500 drop-shadow-md">
+                            <i data-lucide="triangle" class="w-7 h-7 fill-current transform rotate-180"></i>
+                        </div>
+                        <canvas id="wheelCanvas" width="320" height="320" class="w-full h-full rounded-full drop-shadow-lg"></canvas>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 w-full mt-2">
+                        <button onclick="spinWheel()" class="py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl shadow-lg shadow-purple-500/20 active:scale-95 transition flex items-center justify-center gap-2">
+                            <i data-lucide="disc" class="w-5 h-5"></i>
+                            <span>旋轉轉盤</span>
+                        </button>
+                        <button onclick="rapidDraw()" class="py-3 bg-slate-100 dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-slate-700 text-purple-600 dark:text-purple-400 font-bold rounded-2xl border border-purple-200 dark:border-purple-900/40 active:scale-95 transition flex items-center justify-center gap-2">
+                            <i data-lucide="zap" class="w-5 h-5"></i>
+                            <span>快抽一位</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Roster Manager Side Panel -->
+                <div class="lg:col-span-5 glass-card rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="p-2 rounded-xl bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400">
+                                <i data-lucide="users" class="w-5 h-5"></i>
+                            </span>
+                            <h2 class="font-bold text-lg">班級名單管理</h2>
+                        </div>
+                        <button onclick="resetDrawnStatus()" class="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline">
+                            重設已抽取
+                        </button>
+                    </div>
+
+                    <p class="text-xs text-slate-500 mb-2">每行一位姓名（直接貼上學生名單）：</p>
+                    <textarea id="rosterInput" rows="10" class="w-full p-3 text-xs rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono" placeholder="01號 王小明&#10;02號 林小華..."></textarea>
+                    
+                    <button onclick="saveRosterFromText()" class="w-full mt-3 py-2.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md transition">
+                        儲存學生名單
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: 學生榮譽榜與集點 (FEATURE 4: Honor Roll & Points) -->
+        <section id="tab-honor" class="tab-content hidden space-y-6">
+            <div class="glass-card rounded-3xl p-6 shadow-sm flex flex-col space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400">
+                            <i data-lucide="trophy" class="w-5 h-5"></i>
+                        </span>
+                        <div>
+                            <h2 class="font-bold text-lg">班級學生榮譽榜 (Digital Points System)</h2>
+                            <p class="text-xs text-slate-500">點擊按鈕給予正向獎勵與徽章。</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="triggerConfetti()" class="px-3 py-2 text-xs font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-xl hover:bg-amber-200 transition flex items-center gap-1">
+                            <i data-lucide="party-popper" class="w-4 h-4"></i> 歡慶禮花
+                        </button>
+                        <button onclick="resetAllPoints()" class="px-3 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 transition">
+                            分數歸零
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Student Honor Grid -->
+                <div id="studentPointsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 pt-2">
+                    <!-- Student Cards Injected via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: 即時告示板與叮嚀 (FEATURE 5: Announcement Board) -->
+        <section id="tab-board" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Main Blackboard Display -->
+                <div class="lg:col-span-8 bg-slate-900 text-slate-100 rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="p-2 rounded-xl bg-purple-900/50 text-purple-400">
+                                    <i data-lucide="blackboard" class="w-5 h-5"></i>
+                                </span>
+                                <h2 class="font-extrabold text-lg tracking-wide text-purple-300">課堂電子黑板 (Daily Notice)</h2>
+                            </div>
+                            <span class="text-xs text-slate-500 font-mono">Real-time Chalkboard</span>
+                        </div>
+
+                        <!-- Announcement Content Box -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs font-bold text-amber-400 uppercase tracking-wider block mb-1">今日作業與功課：</label>
+                                <textarea id="boardHomeworkText" oninput="saveBoardText()" rows="3" class="w-full p-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-sm font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="1. 國語第七課生字本&#10;2. 數學習作 P.42-45"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="text-xs font-bold text-sky-400 uppercase tracking-wider block mb-1">重要提醒事項：</label>
+                                <textarea id="boardNoticeText" oninput="saveBoardText()" rows="3" class="w-full p-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-sm font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500" placeholder="1. 明日帶水彩用具&#10;2. 體育課記得穿著運動服"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                        <span>自動實時儲存於本機</span>
+                        <span id="boardSaveIndicator" class="text-emerald-400 font-bold">✓ 已儲存</span>
+                    </div>
+                </div>
+
+                <!-- Side Classroom Command Buttons -->
+                <div class="lg:col-span-4 glass-card rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <span class="p-2 rounded-xl bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400">
+                            <i data-lucide="zap" class="w-5 h-5"></i>
+                        </span>
+                        <h2 class="font-bold text-lg">快速課堂狀態切換</h2>
+                    </div>
+
+                    <div class="space-y-2">
+                        <button onclick="changeGlobalStatus('🤫 保持安靜（獨立作答）')" class="w-full p-3 text-left rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 font-bold text-xs flex items-center justify-between group transition">
+                            <span>🤫 保持安靜（獨立作答）</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition"></i>
+                        </button>
+                        <button onclick="changeGlobalStatus('🗣️ 小聲討論（小組合作）')" class="w-full p-3 text-left rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 font-bold text-xs flex items-center justify-between group transition">
+                            <span>🗣️ 小聲討論（小組合作）</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition"></i>
+                        </button>
+                        <button onclick="changeGlobalStatus('👨‍🏫 專注聽講（老師說明）')" class="w-full p-3 text-left rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 font-bold text-xs flex items-center justify-between group transition">
+                            <span>👨‍🏫 專注聽講（老師說明）</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition"></i>
+                        </button>
+                        <button onclick="changeGlobalStatus('📚 自主閱讀（靜心閱讀）')" class="w-full p-3 text-left rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 font-bold text-xs flex items-center justify-between group transition">
+                            <span>📚 自主閱讀（靜心閱讀）</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition"></i>
+                        </button>
+                        <button onclick="changeGlobalStatus('🧹 掃除時間（用心維護）')" class="w-full p-3 text-left rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 font-bold text-xs flex items-center justify-between group transition">
+                            <span>🧹 掃除時間（用心維護）</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Overlay Canvas for Confetti -->
+    <canvas id="confettiCanvas" class="fixed inset-0 pointer-events-none z-50 w-full h-full"></canvas>
+
+    <!-- MODAL: Add/Edit Schedule Segment -->
+    <div id="scheduleModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold flex items-center gap-2">
+                    <i data-lucide="clock" class="w-5 h-5 text-indigo-600"></i> 新增作息時段標記
+                </h3>
+                <button onclick="closeModal('scheduleModal')" class="p-1 rounded-lg text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold mb-1">作息名稱：</label>
+                    <input type="text" id="schedNameInput" placeholder="例如：晨讀時間、午餐午休" class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold mb-1">開始時間：</label>
+                        <input type="time" id="schedStartInput" value="08:00" class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono">
+                    </div>
+                    <div>
+                        <label class="block font-bold mb-1">結束時間：</label>
+                        <input type="time" id="schedEndInput" value="08:30" class="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold mb-1">標籤顏色：</label>
+                    <input type="color" id="schedColorInput" value="#3b82f6" class="w-full h-10 rounded-xl cursor-pointer">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-5">
+                <button onclick="closeModal('scheduleModal')" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-xl">取消</button>
+                <button onclick="saveScheduleSegment()" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 rounded-xl shadow-md">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Winner Celebration -->
+    <div id="winnerModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-sm w-full p-8 text-center shadow-2xl border border-purple-300 dark:border-purple-700">
+            <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/40 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i data-lucide="crown" class="w-10 h-10"></i>
+            </div>
+            <h4 class="text-xs font-bold tracking-widest text-purple-600 dark:text-purple-400 uppercase">幸運獲選學生</h4>
+            <div id="winnerNameDisplay" class="text-4xl font-black my-4 text-slate-800 dark:text-slate-100 bg-gradient-to-r from-purple-500 to-indigo-600 bg-clip-text text-transparent">
+                王小明
+            </div>
+            <button onclick="closeModal('winnerModal')" class="w-full py-3 bg-purple-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition">
+                確定
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Default Master Application State
+        const defaultStudents = Array.from({ length: 30 }, (_, i) => ({
+            id: i + 1,
+            name: `${String(i + 1).padStart(2, '0')}號 學生${i + 1}`,
+            points: 0,
+            drawn: false
+        }));
+
+        const defaultScheduleSegments = [
+            { id: 1, name: '晨間閱讀', start: '08:00', end: '08:30', color: '#0284c7' },
+            { id: 2, name: '導師時間', start: '08:30', end: '08:45', color: '#6366f1' },
+            { id: 3, name: '上午第一節', start: '08:45', end: '09:25', color: '#10b981' },
+            { id: 4, name: '上午第二節', start: '09:35', end: '10:15', color: '#10b981' },
+            { id: 5, name: '大下課活動', start: '10:15', end: '10:30', color: '#f59e0b' },
+            { id: 6, name: '上午第三節', start: '10:30', end: '11:10', color: '#10b981' },
+            { id: 7, name: '上午第四節', start: '11:20', end: '12:00', color: '#10b981' },
+            { id: 8, name: '午餐與午休', start: '12:00', end: '13:20', color: '#ec4899' },
+            { id: 9, name: '下午第五節', start: '13:30', end: '14:10', color: '#8b5cf6' },
+            { id: 10, name: '下午第六節', start: '14:20', end: '15:00', color: '#8b5cf6' },
+            { id: 11, name: '班級大掃除', start: '15:10', end: '15:40', color: '#06b6d4' },
+            { id: 12, name: '準備放學', start: '15:40', end: '16:00', color: '#ef4444' }
+        ];
+
+        const subjectPalette = [
+            { name: '國語', bg: '#e0f2fe', text: '#0369a1', border: '#7dd3fc' },
+            { name: '數學', bg: '#fef3c7', text: '#b45309', border: '#fde047' },
+            { name: '英語', bg: '#f3e8ff', text: '#6b21a8', border: '#d8b4fe' },
+            { name: '社會', bg: '#ffedd5', text: '#c2410c', border: '#fdba74' },
+            { name: '自然', bg: '#dcfce7', text: '#15803d', border: '#86efac' },
+            { name: '體育', bg: '#ffe4e6', text: '#be123c', border: '#fca5a5' },
+            { name: '音樂', bg: '#fce7f3', text: '#9d174d', border: '#f9a8d4' },
+            { name: '美術', bg: '#e0e7ff', text: '#3730a3', border: '#a5b4fc' },
+            { name: '綜合', bg: '#ccfbf1', text: '#0f766e', border: '#5eead4' },
+            { name: '閱讀', bg: '#cfface', text: '#166534', border: '#4ade80' },
+            { name: '導師', bg: '#f1f5f9', text: '#334155', border: '#cbd5e1' },
+            { name: '自習', bg: '#e2e8f0', text: '#1e293b', border: '#94a3b8' }
+        ];
+
+        let state = {
+            students: defaultStudents,
+            scheduleSegments: defaultScheduleSegments,
+            activeBrush: subjectPalette[0],
+            timetable: {}, // Key: `${row}_${col}`
+            excludeDrawn: false,
+            timer: { mode: 'timer', duration: 300, remaining: 300, isRunning: false, interval: null },
+            micStream: null, micAnalyser: null, isMicActive: false, sensitivity: 50,
+            audioCtx: null
+        };
+
+        window.onload = function() {
+            lucide.createIcons();
+            loadLocalStorage();
+            initClock();
+            renderPalette();
+            renderTimetable();
+            renderScheduleSegments();
+            initClockDialCanvas();
+            renderRosterText();
+            initWheel();
+            renderStudentPoints();
+            initBouncyBalls();
+            initConfettiCanvas();
+
+            setInterval(drawClockDial, 1000); // Live dial clock update
+        };
+
+        function loadLocalStorage() {
+            const saved = localStorage.getItem('smart_classroom_v2_data');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.students) state.students = parsed.students;
+                    if (parsed.scheduleSegments) state.scheduleSegments = parsed.scheduleSegments;
+                    if (parsed.timetable) state.timetable = parsed.timetable;
+                    if (parsed.boardHomework) document.getElementById('boardHomeworkText').value = parsed.boardHomework;
+                    if (parsed.boardNotice) document.getElementById('boardNoticeText').value = parsed.boardNotice;
+                } catch(e) { console.error("Error loading local storage", e); }
+            }
+        }
+
+        function saveLocalStorage() {
+            localStorage.setItem('smart_classroom_v2_data', JSON.stringify({
+                students: state.students,
+                scheduleSegments: state.scheduleSegments,
+                timetable: state.timetable,
+                boardHomework: document.getElementById('boardHomeworkText')?.value || '',
+                boardNotice: document.getElementById('boardNoticeText')?.value || ''
+            }));
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById(`btn-${tabId}`).classList.add('active');
+            
+            if (tabId === 'tab-schedule') drawClockDial();
+            if (tabId === 'tab-picker') drawWheel();
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+            else if (document.exitFullscreen) document.exitFullscreen();
+        }
+
+        function changeGlobalStatus(val) {
+            document.getElementById('globalStatusSelect').value = val;
+            saveLocalStorage();
+        }
+
+        function initClock() {
+            function update() {
+                const now = new Date();
+                document.getElementById('liveClock').innerText = now.toTimeString().split(' ')[0];
+                const days = ['日', '一', '二', '三', '四', '五', '六'];
+                document.getElementById('liveDate').innerText = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} (${days[now.getDay()]})`;
+            }
+            update();
+            setInterval(update, 1000);
+        }
+
+        function getAudioContext() {
+            if (!state.audioCtx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                state.audioCtx = new AudioCtx();
+            }
+            if (state.audioCtx.state === 'suspended') state.audioCtx.resume();
+            return state.audioCtx;
+        }
+
+        function playCoinSound() {
+            const ctx = getAudioContext();
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(987.77, now); // B5
+            osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.36);
+        }
+
+        function playChimeSound() {
+            const ctx = getAudioContext();
+            const now = ctx.currentTime;
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+                gain.gain.setValueAtTime(0.25, now + idx * 0.12);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.12 + 1.0);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + idx * 0.12);
+                osc.stop(now + idx * 0.12 + 1.1);
+            });
+        }
+
+        let clockCanvas, clockCtx;
+        function initClockDialCanvas() {
+            clockCanvas = document.getElementById('clockDialCanvas');
+            clockCtx = clockCanvas.getContext('2d');
+            drawClockDial();
+        }
+
+        function drawClockDial() {
+            if (!clockCtx) return;
+            const width = clockCanvas.width;
+            const height = clockCanvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = centerX - 20;
+
+            clockCtx.clearRect(0, 0, width, height);
+
+            // Draw Base Dial Circle
+            clockCtx.beginPath();
+            clockCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            clockCtx.fillStyle = document.documentElement.classList.contains('dark') ? '#1e293b' : '#f8fafc';
+            clockCtx.fill();
+            clockCtx.lineWidth = 4;
+            clockCtx.strokeStyle = '#cbd5e1';
+            clockCtx.stroke();
+
+            // Draw Schedule Arc Sectors
+            const now = new Date();
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            let currentActiveName = "非課堂作息時段 🌙";
+
+            state.scheduleSegments.forEach(seg => {
+                const [startH, startM] = seg.start.split(':').map(Number);
+                const [endH, endM] = seg.end.split(':').map(Number);
+                const startTotal = startH * 60 + startM;
+                const endTotal = endH * 60 + endM;
+
+                const startAngle = (startTotal / 1440) * 2 * Math.PI - (Math.PI / 2);
+                const endAngle = (endTotal / 1440) * 2 * Math.PI - (Math.PI / 2);
+
+                // Highlight active sector
+                if (currentMins >= startTotal && currentMins < endTotal) {
+                    currentActiveName = `${seg.name} (${seg.start}-${seg.end})`;
+                }
+
+                clockCtx.beginPath();
+                clockCtx.moveTo(centerX, centerY);
+                clockCtx.arc(centerX, centerY, radius - 6, startAngle, endAngle);
+                clockCtx.closePath();
+                clockCtx.fillStyle = seg.color + '66'; // semi-transparent
+                clockCtx.fill();
+                clockCtx.strokeStyle = seg.color;
+                clockCtx.lineWidth = 2;
+                clockCtx.stroke();
+            });
+
+            // Update Active Period Badge
+            const badge = document.getElementById('activePeriodBadge');
+            if (badge) badge.innerText = currentActiveName;
+
+            // Draw 24-Hour Tick Marks & Hour Numbers
+            for (let h = 0; h < 24; h++) {
+                const angle = (h / 24) * 2 * Math.PI - (Math.PI / 2);
+                const tickLength = h % 6 === 0 ? 12 : 6;
+                const innerR = radius - tickLength;
+
+                const x1 = centerX + Math.cos(angle) * radius;
+                const y1 = centerY + Math.sin(angle) * radius;
+                const x2 = centerX + Math.cos(angle) * innerR;
+                const y2 = centerY + Math.sin(angle) * innerR;
+
+                clockCtx.beginPath();
+                clockCtx.moveTo(x1, y1);
+                clockCtx.lineTo(x2, y2);
+                clockCtx.strokeStyle = h % 6 === 0 ? '#64748b' : '#94a3b8';
+                clockCtx.lineWidth = h % 6 === 0 ? 2 : 1;
+                clockCtx.stroke();
+
+                if (h % 3 === 0) {
+                    const textR = radius - 22;
+                    const tx = centerX + Math.cos(angle) * textR;
+                    const ty = centerY + Math.sin(angle) * textR;
+                    clockCtx.fillStyle = '#64748b';
+                    clockCtx.font = 'bold 10px monospace';
+                    clockCtx.textAlign = 'center';
+                    clockCtx.textBaseline = 'middle';
+                    clockCtx.fillText(String(h).padStart(2, '0'), tx, ty);
+                }
+            }
+
+            // Draw Current Time Indicator Hand
+            const handAngle = (currentMins / 1440) * 2 * Math.PI - (Math.PI / 2);
+            clockCtx.beginPath();
+            clockCtx.moveTo(centerX, centerY);
+            clockCtx.lineTo(centerX + Math.cos(handAngle) * (radius - 10), centerY + Math.sin(handAngle) * (radius - 10));
+            clockCtx.strokeStyle = '#ef4444';
+            clockCtx.lineWidth = 3;
+            clockCtx.stroke();
+
+            // Center Pin
+            clockCtx.beginPath();
+            clockCtx.arc(centerX, centerY, 6, 0, 2 * Math.PI);
+            clockCtx.fillStyle = '#ef4444';
+            clockCtx.fill();
+        }
+
+        function renderScheduleSegments() {
+            const list = document.getElementById('scheduleSegmentsList');
+            list.innerHTML = state.scheduleSegments.map(seg => `
+                <div class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-3.5 h-3.5 rounded-full" style="background-color: ${seg.color}"></span>
+                        <span class="font-bold text-xs">${seg.name}</span>
+                        <span class="text-[11px] font-mono text-slate-400">(${seg.start} - ${seg.end})</span>
+                    </div>
+                    <button onclick="deleteScheduleSegment(${seg.id})" class="text-slate-400 hover:text-rose-500 transition p-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+            drawClockDial();
+        }
+
+        function openScheduleModal() {
+            document.getElementById('scheduleModal').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function saveScheduleSegment() {
+            const name = document.getElementById('schedNameInput').value.trim();
+            const start = document.getElementById('schedStartInput').value;
+            const end = document.getElementById('schedEndInput').value;
+            const color = document.getElementById('schedColorInput').value;
+
+            if (name && start && end) {
+                state.scheduleSegments.push({ id: Date.now(), name, start, end, color });
+                saveLocalStorage();
+                renderScheduleSegments();
+                closeModal('scheduleModal');
+            }
+        }
+
+        function deleteScheduleSegment(id) {
+            state.scheduleSegments = state.scheduleSegments.filter(s => s.id !== id);
+            saveLocalStorage();
+            renderScheduleSegments();
+        }
+
+        function resetDefaultSchedule() {
+            state.scheduleSegments = [...defaultScheduleSegments];
+            saveLocalStorage();
+            renderScheduleSegments();
+        }
+
+        function renderPalette() {
+            const container = document.getElementById('paletteContainer');
+            container.innerHTML = subjectPalette.map((subj, idx) => `
+                <button onclick="selectBrush(${idx})" class="palette-btn px-2.5 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1 border" style="background-color: ${subj.bg}; color: ${subj.text}; border-color: ${subj.border};">
+                    ${subj.name}
+                </button>
+            `).join('');
+        }
+
+        function selectBrush(idx) {
+            state.activeBrush = subjectPalette[idx];
+        }
+
+        function renderTimetable() {
+            const periods = [
+                '晨光時間 (08:00)', '第一節 (08:45)', '第二節 (09:35)', '第三節 (10:30)',
+                '第四節 (11:20)', '午餐午休 (12:00)', '第五節 (13:30)', '第六節 (14:20)', '掃除放學 (15:10)'
+            ];
+
+            const body = document.getElementById('timetableBody');
+            body.innerHTML = periods.map((period, r) => `
+                <tr>
+                    <td class="p-2 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 font-bold text-slate-500 text-xs">${period}</td>
+                    ${[0, 1, 2, 3, 4].map(c => {
+                        const cellKey = `${r}_${c}`;
+                        const cellData = state.timetable[cellKey] || { name: '', bg: '', text: '' };
+                        return `
+                            <td onclick="paintCell('${cellKey}')" class="p-3 border border-slate-200 dark:border-slate-700 cursor-pointer font-bold transition hover:opacity-80" style="background-color: ${cellData.bg}; color: ${cellData.text};">
+                                ${cellData.name || '-'}
+                            </td>
+                        `;
+                    }).join('')}
+                </tr>
+            `).join('');
+        }
+
+        function paintCell(cellKey) {
+            state.timetable[cellKey] = {
+                name: state.activeBrush.name,
+                bg: state.activeBrush.bg,
+                text: state.activeBrush.text
+            };
+            saveLocalStorage();
+            renderTimetable();
+        }
+
+        function clearTimetable() {
+            state.timetable = {};
+            saveLocalStorage();
+            renderTimetable();
+        }
+
+        let wheelCanvas, wheelCtx;
+        let currentWheelAngle = 0;
+        let isWheelSpinning = false;
+
+        function initWheel() {
+            wheelCanvas = document.getElementById('wheelCanvas');
+            wheelCtx = wheelCanvas.getContext('2d');
+            drawWheel();
+        }
+
+        function getActiveWheelStudents() {
+            return state.excludeDrawn ? state.students.filter(s => !s.drawn) : state.students;
+        }
+
+        function drawWheel() {
+            if (!wheelCtx) return;
+            const students = getActiveWheelStudents();
+            const width = wheelCanvas.width;
+            const height = wheelCanvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = centerX - 10;
+
+            wheelCtx.clearRect(0, 0, width, height);
+            if (students.length === 0) return;
+
+            const sliceAngle = (2 * Math.PI) / students.length;
+            const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
+
+            students.forEach((student, i) => {
+                const angle = currentWheelAngle + i * sliceAngle;
+                wheelCtx.beginPath();
+                wheelCtx.moveTo(centerX, centerY);
+                wheelCtx.arc(centerX, centerY, radius, angle, angle + sliceAngle);
+                wheelCtx.fillStyle = colors[i % colors.length];
+                wheelCtx.fill();
+                wheelCtx.strokeStyle = '#ffffff';
+                wheelCtx.lineWidth = 2;
+                wheelCtx.stroke();
+
+                wheelCtx.save();
+                wheelCtx.translate(centerX, centerY);
+                wheelCtx.rotate(angle + sliceAngle / 2);
+                wheelCtx.textAlign = 'right';
+                wheelCtx.fillStyle = '#ffffff';
+                wheelCtx.font = 'bold 12px Inter, sans-serif';
+                wheelCtx.fillText(student.name.substring(0, 7), radius - 15, 4);
+                wheelCtx.restore();
+            });
+        }
+
+        function spinWheel() {
+            if (isWheelSpinning) return;
+            const students = getActiveWheelStudents();
+            if (students.length === 0) return;
+
+            getAudioContext();
+            isWheelSpinning = true;
+            const duration = 3000;
+            const startVel = Math.random() * 0.25 + 0.35;
+            let startTime = null;
+
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                const progress = elapsed / duration;
+
+                if (progress < 1) {
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
+                    currentWheelAngle += startVel * (1 - easeOut);
+                    drawWheel();
+                    requestAnimationFrame(animate);
+                } else {
+                    isWheelSpinning = false;
+                    const sliceAngle = (2 * Math.PI) / students.length;
+                    const normalizedAngle = (1.5 * Math.PI - (currentWheelAngle % (2 * Math.PI)) + 4 * Math.PI) % (2 * Math.PI);
+                    const winnerIndex = Math.floor(normalizedAngle / sliceAngle) % students.length;
+                    announceWinner(students[winnerIndex]);
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function rapidDraw() {
+            const students = getActiveWheelStudents();
+            if (students.length === 0) return;
+            const winner = students[Math.floor(Math.random() * students.length)];
+            announceWinner(winner);
+        }
+
+        function announceWinner(student) {
+            student.drawn = true;
+            document.getElementById('winnerNameDisplay').innerText = student.name;
+            document.getElementById('winnerModal').classList.remove('hidden');
+            triggerConfetti();
+            playChimeSound();
+            saveLocalStorage();
+            drawWheel();
+        }
+
+        function toggleExcludeDrawn(val) {
+            state.excludeDrawn = val;
+            drawWheel();
+        }
+
+        function renderRosterText() {
+            document.getElementById('rosterInput').value = state.students.map(s => s.name).join('\n');
+        }
+
+        function saveRosterFromText() {
+            const text = document.getElementById('rosterInput').value.trim();
+            if (text) {
+                const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                state.students = lines.map((name, idx) => ({ id: idx + 1, name, points: 0, drawn: false }));
+                saveLocalStorage();
+                drawWheel();
+                renderStudentPoints();
+            }
+        }
+
+        function resetDrawnStatus() {
+            state.students.forEach(s => s.drawn = false);
+            saveLocalStorage();
+            drawWheel();
+        }
+
+        let noiseCanvas, noiseCtx, balls = [];
+        function initBouncyBalls() {
+            noiseCanvas = document.getElementById('noiseCanvas');
+            noiseCtx = noiseCanvas.getContext('2d');
+            noiseCanvas.width = noiseCanvas.parentElement.clientWidth;
+            noiseCanvas.height = noiseCanvas.parentElement.clientHeight;
+
+            const colors = ['#38bdf8', '#34d399', '#fbbf24', '#f87171', '#c084fc'];
+            balls = Array.from({ length: 20 }, (_, i) => ({
+                x: Math.random() * noiseCanvas.width,
+                y: Math.random() * noiseCanvas.height,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                radius: Math.random() * 8 + 6,
+                color: colors[i % colors.length]
+            }));
+
+            requestAnimationFrame(updateNoisePhysics);
+        }
+
+        async function toggleMicrophone() {
+            if (state.isMicActive) {
+                if (state.micStream) state.micStream.getTracks().forEach(t => t.stop());
+                state.isMicActive = false;
+                document.getElementById('btnMicToggle').innerHTML = `<i data-lucide="power" class="w-4 h-4"></i> 啟動麥克風監測`;
+                lucide.createIcons();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const ctx = getAudioContext();
+                const source = ctx.createMediaStreamSource(stream);
+                const analyser = ctx.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+
+                state.micStream = stream;
+                state.micAnalyser = analyser;
+                state.isMicActive = true;
+                document.getElementById('btnMicToggle').innerHTML = `<i data-lucide="power-off" class="w-4 h-4 text-rose-500"></i> 關閉麥克風`;
+                lucide.createIcons();
+            } catch (err) {
+                console.error("Mic Error:", err);
+            }
+        }
+
+        function updateSensitivity(val) {
+            state.sensitivity = Number(val);
+            document.getElementById('sensitivityVal').innerText = val;
+        }
+
+        function updateNoisePhysics() {
+            if (!noiseCtx) return;
+            noiseCtx.clearRect(0, 0, noiseCanvas.width, noiseCanvas.height);
+
+            let vol = 0;
+            if (state.isMicActive && state.micAnalyser) {
+                const dataArray = new Uint8Array(state.micAnalyser.frequencyBinCount);
+                state.micAnalyser.getByteFrequencyData(dataArray);
+                const sum = dataArray.reduce((a, b) => a + b, 0);
+                vol = Math.round(sum / dataArray.length);
+                document.getElementById('dbValueText').innerText = `${Math.min(99, vol + 25)} dB`;
+
+                const badge = document.getElementById('noiseWarningBadge');
+                if (vol > state.sensitivity) {
+                    badge.innerText = '太吵囉 ⚠️';
+                    badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 animate-bounce';
+                } else {
+                    badge.innerText = '安靜良好 ✨';
+                    badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700';
+                }
+            }
+
+            const boost = vol > state.sensitivity ? vol * 0.12 : 0;
+            balls.forEach(ball => {
+                ball.vy += 0.15;
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+
+                if (boost > 0 && Math.random() < 0.2) ball.vy -= boost;
+                if (ball.y + ball.radius > noiseCanvas.height) { ball.y = noiseCanvas.height - ball.radius; ball.vy = -ball.vy * 0.7; }
+                if (ball.x + ball.radius > noiseCanvas.width || ball.x - ball.radius < 0) ball.vx = -ball.vx;
+
+                noiseCtx.beginPath();
+                noiseCtx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                noiseCtx.fillStyle = ball.color;
+                noiseCtx.fill();
+            });
+
+            requestAnimationFrame(updateNoisePhysics);
+        }
+
+        function renderStudentPoints() {
+            const grid = document.getElementById('studentPointsGrid');
+            grid.innerHTML = state.students.map(s => `
+                <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-between text-center">
+                    <span class="text-xs font-bold truncate w-full">${s.name}</span>
+                    <span class="text-2xl font-black font-mono text-amber-500 my-1">${s.points}</span>
+                    <div class="flex items-center gap-1 w-full">
+                        <button onclick="addPoint(${s.id}, -1)" class="flex-1 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-xs font-bold">-1</button>
+                        <button onclick="addPoint(${s.id}, 1)" class="flex-1 py-1 rounded-lg bg-amber-500 text-white text-xs font-bold shadow-sm">+1</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addPoint(id, delta) {
+            const student = state.students.find(s => s.id === id);
+            if (student) {
+                student.points = Math.max(0, student.points + delta);
+                if (delta > 0) playCoinSound();
+                saveLocalStorage();
+                renderStudentPoints();
+            }
+        }
+
+        function resetAllPoints() {
+            state.students.forEach(s => s.points = 0);
+            saveLocalStorage();
+            renderStudentPoints();
+        }
+
+        // Timer Logic
+        function setTimerMode(mode) {
+            state.timer.mode = mode;
+            state.timer.remaining = mode === 'timer' ? state.timer.duration : 0;
+            updateTimerDisplay();
+        }
+        function setQuickTimer(mins) {
+            state.timer.duration = mins * 60;
+            state.timer.remaining = mins * 60;
+            updateTimerDisplay();
+        }
+        function toggleTimer() {
+            if (state.timer.isRunning) {
+                clearInterval(state.timer.interval);
+                state.timer.isRunning = false;
+                document.getElementById('labelTimerPlay').innerText = '開始';
+            } else {
+                getAudioContext();
+                state.timer.isRunning = true;
+                document.getElementById('labelTimerPlay').innerText = '暫停';
+                state.timer.interval = setInterval(() => {
+                    if (state.timer.mode === 'timer') {
+                        if (state.timer.remaining > 0) state.timer.remaining--;
+                        else { clearInterval(state.timer.interval); playChimeSound(); triggerConfetti(); }
+                    } else state.timer.remaining++;
+                    updateTimerDisplay();
+                }, 1000);
+            }
+        }
+        function resetTimer() {
+            if (state.timer.interval) clearInterval(state.timer.interval);
+            state.timer.isRunning = false;
+            document.getElementById('labelTimerPlay').innerText = '開始';
+            setTimerMode(state.timer.mode);
+        }
+        function updateTimerDisplay() {
+            const mins = Math.floor(state.timer.remaining / 60);
+            const secs = state.timer.remaining % 60;
+            document.getElementById('timerDisplay').innerText = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+        }
+
+        // Blackboard save
+        function saveBoardText() {
+            saveLocalStorage();
+            const ind = document.getElementById('boardSaveIndicator');
+            ind.innerText = '✓ 已儲存';
+            setTimeout(() => ind.innerText = '', 2000);
+        }
+
+        // Confetti Engine
+        let confettiCanvas, confettiCtx, confettiParticles = [];
+        function initConfettiCanvas() {
+            confettiCanvas = document.getElementById('confettiCanvas');
+            confettiCtx = confettiCanvas.getContext('2d');
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        function triggerConfetti() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+            const colors = ['#f43f5e', '#8b5cf6', '#0ea5e9', '#10b981', '#f59e0b'];
+            confettiParticles = Array.from({ length: 80 }, () => ({
+                x: window.innerWidth / 2, y: window.innerHeight / 2,
+                vx: (Math.random() - 0.5) * 14, vy: (Math.random() - 0.7) * 14,
+                size: Math.random() * 8 + 4, color: colors[Math.floor(Math.random() * colors.length)], life: 1
+            }));
+            requestAnimationFrame(animateConfetti);
+        }
+        function animateConfetti() {
+            if (!confettiCtx) return;
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            confettiParticles.forEach((p, idx) => {
+                p.x += p.vx; p.y += p.vy; p.vy += 0.25; p.life -= 0.015;
+                confettiCtx.fillStyle = p.color; confettiCtx.globalAlpha = Math.max(0, p.life);
+                confettiCtx.fillRect(p.x, p.y, p.size, p.size);
+                if (p.life <= 0) confettiParticles.splice(idx, 1);
+            });
+            if (confettiParticles.length > 0) requestAnimationFrame(animateConfetti);
+        }
+    </script>
+</body>
+</html>
